@@ -1,5 +1,7 @@
 using Azure.B2C.Security;
 
+var badDomains = File.ReadLines("../bad-domains.txt").ToHashSet();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -9,6 +11,7 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.CustomSchemaIds(type => type.FullName);
 });
+builder.Services.AddKeyedSingleton<HashSet<string>>("BadDomains", badDomains);
 
 var app = builder.Build();
 
