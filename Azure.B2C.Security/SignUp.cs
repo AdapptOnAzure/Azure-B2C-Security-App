@@ -1,4 +1,3 @@
-using System.Net.Mail;
 using System.Text.Json;
 
 namespace Azure.B2C.Security;
@@ -27,15 +26,15 @@ public static class SignUp
 
         if (
             user is null
-            || !user.TryGetValue("email", out JsonElement? emailObj)
-            || emailObj is not { ValueKind: JsonValueKind.String }
-            || !MailAddress.TryCreate(emailObj.Value.ToString(), out MailAddress? email)
+            || !user.TryGetValue("email", out JsonElement? email)
+            || email is not { ValueKind: JsonValueKind.String }
+            || !email.Value.ToString().Contains('@')
         )
         {
             return TypedResults.BadRequest();
         }
 
-        string[] dnsParts = email.Host.Split('.');
+        string[] dnsParts = email.Value.ToString().Split('@')[1].Split('.');
 
         for (int i = dnsParts.Length - 1; i >= 0; i--)
         {
