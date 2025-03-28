@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace Azure.B2C.Security;
@@ -6,9 +7,20 @@ public static class SignUp
 {
     private const string Version = "1.0.0";
 
-    private static HttpClient _httpClient = new()
+    private static readonly HttpClient CaptchaClient = new()
     {
         BaseAddress = new Uri("https://www.google.com/recaptcha/api/siteverify"),
+        Timeout = TimeSpan.FromSeconds(15),
+    };
+    private static readonly HttpClient CredentialClient = new()
+    {
+        BaseAddress = new Uri("https://login.microsoftonline.com"),
+        DefaultRequestHeaders = { { "Content-Type", "application/x-www-form-urlencoded" } },
+        Timeout = TimeSpan.FromSeconds(15),
+    };
+    private static readonly HttpClient GraphClient = new()
+    {
+        BaseAddress = new Uri("https://graph.microsoft.com/beta"),
         Timeout = TimeSpan.FromSeconds(15),
     };
 
@@ -29,9 +41,7 @@ public static class SignUp
         [FromKeyedServices("BadDomains")] HashSet<string> badDomains
     )
     {
-        var user = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement?>>(
-            context.Request.Body
-        );
+        var user = await context.Request.ReadFromJsonAsync<Dictionary<string, JsonElement?>>();
 
         if (
             user is null
@@ -62,16 +72,80 @@ public static class SignUp
         return TypedResults.Ok();
     }
 
-    private static IResult TooManyUsers(HttpContext context)
+    private static async ValueTask<IResult> TooManyUsers(HttpContext context, IConfiguration config)
     {
-        return TypedResults.Ok();
+        string tenantId =
+            config["TenantId"] ?? throw new InvalidOperationException("TenantId is not set.");
+        string appId = config["AppId"] ?? throw new InvalidOperationException("AppId is not set.");
+        string appSecret =
+            config["AppSecret"] ?? throw new InvalidOperationException("AppSecret is not set.");
+
+        HttpResponseMessage response = await CredentialClient.PostAsync(
+            new Uri($"{tenantId}/oauth2/v2.0/token"),
+            new FormUrlEncodedContent(
+                [
+                    new KeyValuePair<string, string>("grant_type", "client_credentials"),
+                    new KeyValuePair<string, string>("client_id", appId),
+                    new KeyValuePair<string, string>("client_secret", appSecret),
+                    new KeyValuePair<string, string>(
+                        "scope",
+                        "https://graph.microsoft.com/.default"
+                    ),
+                ]
+            )
+        );
+        response.EnsureSuccessStatusCode();
+        var tokenData = await response.Content.ReadFromJsonAsync<
+            Dictionary<string, JsonElement?>
+        >();
+
+        if (
+            tokenData is null
+            || !tokenData.TryGetValue("access_token", out JsonElement? token)
+            || token is not { ValueKind: JsonValueKind.String }
+        )
+        {
+            return TypedResults.BadRequest();
+        }
+
+        string accessToken = token.Value.ToString();
+        GraphClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            accessToken
+        );
+
+        var quotaData = await GraphClient.GetFromJsonAsync<Dictionary<string, JsonElement?>>(
+            new Uri("/organization?select=directorySizeQuota")
+        );
+        if (
+            quotaData is null
+            || !quotaData.TryGetValue("value", out JsonElement? value)
+            || value is not { ValueKind: JsonValueKind.Object }
+            || !value.Value.TryGetProperty("directorySizeQuota", out JsonElement quota)
+            || quota is not { ValueKind: JsonValueKind.Object }
+            || !quota.TryGetProperty("used", out JsonElement used)
+            || used is not { ValueKind: JsonValueKind.Number }
+        )
+        {
+            GraphClient.DefaultRequestHeaders.Authorization = null;
+            return TypedResults.BadRequest();
+        }
+
+        int limit = config.GetValue("QuotaLimit", 50000);
+
+        if (used.GetInt32() < limit)
+        {
+            return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
+        }
+
+        // TODO: issue an alert to the admin
+
+        return TypedResults.Ok(new { Version, Action = Action.ShowBlockPage.ToString() });
     }
 
     private static async ValueTask<IResult> Captcha(HttpContext context, IConfiguration config)
     {
-        var user = await JsonSerializer.DeserializeAsync<Dictionary<string, JsonElement?>>(
-            context.Request.Body
-        );
+        var user = await context.Request.ReadFromJsonAsync<Dictionary<string, JsonElement?>>();
 
         if (user is null)
         {
@@ -109,14 +183,14 @@ public static class SignUp
             );
         }
 
-        return TypedResults.Ok(new {Version, Action = Action.Continue.ToString()});
+        return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
     }
 
     private static async ValueTask<bool> RunCaptcha(string token, IConfiguration config)
     {
         try
         {
-            HttpResponseMessage response = await _httpClient.PostAsJsonAsync(
+            HttpResponseMessage response = await CaptchaClient.PostAsJsonAsync(
                 (string?)null,
                 new { Secret = config["CaptchaSecret"], Response = token }
             );
@@ -124,8 +198,11 @@ public static class SignUp
 
             var data = await response.Content.ReadFromJsonAsync<Dictionary<string, JsonElement?>>();
 
-            return data is not null && data.TryGetValue("success", out JsonElement? successObj) &&
-                   successObj is not null && bool.TryParse(successObj.Value.ToString(), out bool success) && success;
+            return data is not null
+                && data.TryGetValue("success", out JsonElement? successObj)
+                && successObj is not null
+                && bool.TryParse(successObj.Value.ToString(), out bool success)
+                && success;
         }
         catch
         {
