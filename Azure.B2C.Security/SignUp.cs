@@ -4,6 +4,8 @@ namespace Azure.B2C.Security;
 
 public static class SignUp
 {
+    private const string Version = "1.0.0";
+
     public static IEndpointRouteBuilder MapSignUp(this IEndpointRouteBuilder endpoints)
     {
         RouteGroupBuilder group = endpoints.MapGroup("/signup");
@@ -41,22 +43,21 @@ public static class SignUp
             string dsn = string.Join('.', dnsParts, i, dnsParts.Length - i);
             if (badDomains.Contains(dsn))
             {
-                return TypedResults.Ok(new Response(Action: Action.ShowBlockPage.ToString()));
+                return TypedResults.Ok(new { Version, Action = Action.ShowBlockPage.ToString() });
             }
         }
 
-        return TypedResults.Ok(new Response(Action: Action.Continue.ToString()));
+        return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
     }
 
     private static IResult BadHost(HttpContext context)
     {
-        string remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-        return TypedResults.Ok(new Response());
+        return TypedResults.Ok();
     }
 
     private static IResult TooManyUsers(HttpContext context)
     {
-        return TypedResults.Ok(new Response());
+        return TypedResults.Ok();
     }
 }
 
@@ -64,6 +65,5 @@ public enum Action
 {
     ShowBlockPage,
     Continue,
+    ValidationError,
 }
-
-public record Response(string Version = "1.0.0", string Action = "ShowBlockPage");
