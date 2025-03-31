@@ -1,6 +1,6 @@
 using Azure.B2C.Security;
 
-var badDomains = File.ReadLines("../bad-domains.txt").ToHashSet();
+var badDomains = File.ReadLines("bad-domains.txt").ToHashSet();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders().AddConsole();
