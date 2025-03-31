@@ -146,22 +146,18 @@ public static class SignUp
         return TypedResults.Ok(new { Version, Action = Action.ShowBlockPage.ToString() });
     }
 
-    private static async ValueTask<IResult> Captcha(HttpContext context, IConfiguration config)
+    private static async ValueTask<IResult> Captcha(HttpContext context, IConfiguration config, ILogger logger)
     {
         var user = await context.Request.ReadFromJsonAsync<Dictionary<string, JsonElement?>>();
-
-        if (user is null)
-        {
-            return TypedResults.BadRequest();
-        }
-
         string key = $"extension_{config["AppId"]}_CaptchaUserResponseToken";
 
         if (
-            !user.TryGetValue(key, out JsonElement? token)
+            user is null
+            || !user.TryGetValue(key, out JsonElement? token)
             || token is not { ValueKind: JsonValueKind.String }
         )
         {
+            logger.LogWarning("Bad captcha request.");
             return TypedResults.BadRequest(
                 new
                 {
@@ -173,8 +169,9 @@ public static class SignUp
             );
         }
 
-        if (!await RunCaptcha(token.Value.ToString(), config))
+        if (!await RunCaptcha(token.Value.ToString(), config["CaptchaSectret"]))
         {
+            logger.LogWarning("Captcha validation failed.");
             return TypedResults.BadRequest(
                 new
                 {
@@ -189,13 +186,13 @@ public static class SignUp
         return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
     }
 
-    private static async ValueTask<bool> RunCaptcha(string token, IConfiguration config)
+    private static async ValueTask<bool> RunCaptcha(string token, string? secret)
     {
         try
         {
             HttpResponseMessage response = await CaptchaClient.PostAsJsonAsync(
                 (string?)null,
-                new { Secret = config["CaptchaSecret"], Response = token }
+                new { Secret = secret, Response = token }
             );
             response.EnsureSuccessStatusCode();
 
