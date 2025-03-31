@@ -12,6 +12,12 @@ builder.Services.AddTransient<ILogger>(p =>
     return loggerFactory.CreateLogger("Azure.B2C.Security");
 });
 
+// Disable the "Server" Header on HTTP responses
+builder.WebHost.ConfigureKestrel(options => 
+{
+    options.AddServerHeader = false;
+});
+
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
