@@ -1,5 +1,4 @@
-﻿using Hasher;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
 var hasher = new PasswordHasher<IdentityUser>(new OptionsWrapper<PasswordHasherOptions>(new PasswordHasherOptions()
