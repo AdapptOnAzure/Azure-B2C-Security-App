@@ -26,18 +26,23 @@ public static class SignUp
 
         group.MapGet("/", () => "Hello World from /signup!");
 
-        group.MapPost("/bad-email", BadEmail);
-        group.MapPost("/too-many-users", TooManyUsers);
+        group.MapPost("/b2c-api-connector", CheckForEvil);
 
         return endpoints;
     }
 
-    private static async ValueTask<IResult> BadEmail(
-        HttpContext context,
-        ILogger logger,
-        [FromKeyedServices("BadDomains")] HashSet<string> badDomains
-    )
+    public enum Action
     {
+        ShowBlockPage,
+        Continue,
+        ValidationError,
+    }
+
+
+    private static async ValueTask<IResult> CheckForEvil(HttpContext context, ILogger logger, IConfiguration config, [FromKeyedServices("BadDomains")] HashSet<string> badDomains)
+    {
+
+        // Begin email domain checks
         var user = await context.Request.ReadFromJsonAsync<Dictionary<string, JsonElement?>>();
 
         if (
@@ -69,12 +74,9 @@ public static class SignUp
                 );
             }
         }
+        // End email domain checks
 
-        return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
-    }
-
-    private static async ValueTask<IResult> TooManyUsers(HttpContext context, IConfiguration config)
-    {
+        // Begin B2C object count checks
         string tenantId =
             config["TenantId"] ?? throw new InvalidOperationException("TenantId is not set.");
         string appId = config["AppId"] ?? throw new InvalidOperationException("AppId is not set.");
@@ -134,20 +136,13 @@ public static class SignUp
 
         int limit = config.GetValue("QuotaLimit", 50000);
 
-        if (used.GetInt32() < limit)
+        if (used.GetInt32() > limit)
         {
-            return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
+            // TODO: issue an alert to the admin
+            return TypedResults.Ok(new { Version, Action = Action.ShowBlockPage.ToString() });
         }
+        // End B2C object count checks
 
-        // TODO: issue an alert to the admin
-
-        return TypedResults.Ok(new { Version, Action = Action.ShowBlockPage.ToString() });
+        return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
     }
-}
-
-public enum Action
-{
-    ShowBlockPage,
-    Continue,
-    ValidationError,
 }
