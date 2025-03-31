@@ -27,7 +27,6 @@ public static class SignUp
         group.MapGet("/", () => "Hello World from /signup!");
 
         group.MapPost("/bad-email", BadEmail);
-        group.MapPost("/bad-host", BadHost);
         group.MapPost("/too-many-users", TooManyUsers);
 
         return endpoints;
@@ -72,11 +71,6 @@ public static class SignUp
         }
 
         return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
-    }
-
-    private static IResult BadHost(HttpContext context)
-    {
-        return TypedResults.Ok();
     }
 
     private static async ValueTask<IResult> TooManyUsers(HttpContext context, IConfiguration config)
