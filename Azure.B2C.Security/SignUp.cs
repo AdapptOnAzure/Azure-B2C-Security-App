@@ -10,7 +10,7 @@ public static class SignUp
 
     private static readonly HttpClient CaptchaClient = new()
     {
-        BaseAddress = new Uri("https://www.google.com/recaptcha/api/siteverify"),
+        BaseAddress = new Uri("https://api.hcaptcha.com/siteverify"),
         Timeout = TimeSpan.FromSeconds(15),
     };
     private static readonly HttpClient CredentialClient = new()
