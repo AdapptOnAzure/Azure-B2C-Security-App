@@ -38,6 +38,7 @@ public static class SignUp
 
     private static async ValueTask<IResult> BadEmail(
         HttpContext context,
+        ILogger logger,
         [FromKeyedServices("BadDomains")] HashSet<string> badDomains
     )
     {
@@ -50,6 +51,7 @@ public static class SignUp
             || !email.Value.ToString().Contains('@')
         )
         {
+            logger.LogWarning("Bad email format.");
             return TypedResults.BadRequest();
         }
 
@@ -60,6 +62,7 @@ public static class SignUp
             string dsn = string.Join('.', dnsParts, i, dnsParts.Length - i);
             if (badDomains.Contains(dsn))
             {
+                logger.LogWarning("Bad email domain: {Domain}", dsn);
                 return TypedResults.Ok(new { Version, Action = Action.ShowBlockPage.ToString() });
             }
         }
