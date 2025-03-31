@@ -19,6 +19,8 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
+app.MapGet("/", () => "Hello World!");
+
 app.MapSignUp();
 
 app.Run();

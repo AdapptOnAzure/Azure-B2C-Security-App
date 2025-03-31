@@ -6,6 +6,7 @@ namespace Azure.B2C.Security;
 public static class SignUp
 {
     private const string Version = "1.0.0";
+    private const string BlockingResponseMessage = "There was a problem with your request. You are not able to sign up at this time. Please contact your system administrator";
 
     private static readonly HttpClient CaptchaClient = new()
     {
@@ -27,6 +28,8 @@ public static class SignUp
     public static IEndpointRouteBuilder MapSignUp(this IEndpointRouteBuilder endpoints)
     {
         RouteGroupBuilder group = endpoints.MapGroup("/signup");
+
+        group.MapGet("/", () => "Hello World from /signup!");
 
         group.MapPost("/bad-email", BadEmail);
         group.MapPost("/bad-host", BadHost);
@@ -63,7 +66,14 @@ public static class SignUp
             if (badDomains.Contains(dsn))
             {
                 logger.LogWarning("Bad email domain: {Domain}", dsn);
-                return TypedResults.Ok(new { Version, Action = Action.ShowBlockPage.ToString() });
+                return TypedResults.Ok(
+                    new
+                    {
+                        Version,
+                        Action = Action.ShowBlockPage.ToString(),
+                        UserMessage = BlockingResponseMessage,
+                    }
+                );
             }
         }
 
