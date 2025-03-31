@@ -8,11 +8,6 @@ public static class SignUp
     private const string Version = "1.0.0";
     private const string BlockingResponseMessage = "There was a problem with your request. You are not able to sign up at this time. Please contact your system administrator";
 
-    private static readonly HttpClient CaptchaClient = new()
-    {
-        BaseAddress = new Uri("https://api.hcaptcha.com/siteverify"),
-        Timeout = TimeSpan.FromSeconds(15),
-    };
     private static readonly HttpClient CredentialClient = new()
     {
         BaseAddress = new Uri("https://login.microsoftonline.com"),
@@ -34,7 +29,6 @@ public static class SignUp
         group.MapPost("/bad-email", BadEmail);
         group.MapPost("/bad-host", BadHost);
         group.MapPost("/too-many-users", TooManyUsers);
-        group.MapPost("/captcha", Captcha);
 
         return endpoints;
     }
@@ -154,70 +148,6 @@ public static class SignUp
         // TODO: issue an alert to the admin
 
         return TypedResults.Ok(new { Version, Action = Action.ShowBlockPage.ToString() });
-    }
-
-    private static async ValueTask<IResult> Captcha(HttpContext context, IConfiguration config, ILogger logger)
-    {
-        var user = await context.Request.ReadFromJsonAsync<Dictionary<string, JsonElement?>>();
-        string key = $"extension_{config["AppId"]}_CaptchaUserResponseToken";
-
-        if (
-            user is null
-            || !user.TryGetValue(key, out JsonElement? token)
-            || token is not { ValueKind: JsonValueKind.String }
-        )
-        {
-            logger.LogWarning("Bad captcha request.");
-            return TypedResults.BadRequest(
-                new
-                {
-                    Version,
-                    Status = 400,
-                    Action = Action.ValidationError.ToString(),
-                    UserMessage = "Please complete the Captcha.",
-                }
-            );
-        }
-
-        if (!await RunCaptcha(token.Value.ToString(), config["CaptchaSectret"]))
-        {
-            logger.LogWarning("Captcha validation failed.");
-            return TypedResults.BadRequest(
-                new
-                {
-                    Version,
-                    Status = 400,
-                    Action = Action.ValidationError.ToString(),
-                    UserMessage = "Captcha validation failed. Please try again.",
-                }
-            );
-        }
-
-        return TypedResults.Ok(new { Version, Action = Action.Continue.ToString() });
-    }
-
-    private static async ValueTask<bool> RunCaptcha(string token, string? secret)
-    {
-        try
-        {
-            HttpResponseMessage response = await CaptchaClient.PostAsJsonAsync(
-                (string?)null,
-                new { Secret = secret, Response = token }
-            );
-            response.EnsureSuccessStatusCode();
-
-            var data = await response.Content.ReadFromJsonAsync<Dictionary<string, JsonElement?>>();
-
-            return data is not null
-                && data.TryGetValue("success", out JsonElement? successObj)
-                && successObj is not null
-                && bool.TryParse(successObj.Value.ToString(), out bool success)
-                && success;
-        }
-        catch
-        {
-            return false;
-        }
     }
 }
 
