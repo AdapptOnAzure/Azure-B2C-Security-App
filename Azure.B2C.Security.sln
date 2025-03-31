@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.B2C.Security", "Azure.B2C.Security\Azure.B2C.Security.csproj", "{3E10ABE0-6B91-4F85-ABA9-B89C76953F58}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hasher", "Hasher\Hasher.csproj", "{94B97C65-9203-4DC0-8AD2-381FEAA6BF08}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{3E10ABE0-6B91-4F85-ABA9-B89C76953F58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3E10ABE0-6B91-4F85-ABA9-B89C76953F58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E10ABE0-6B91-4F85-ABA9-B89C76953F58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94B97C65-9203-4DC0-8AD2-381FEAA6BF08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94B97C65-9203-4DC0-8AD2-381FEAA6BF08}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94B97C65-9203-4DC0-8AD2-381FEAA6BF08}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94B97C65-9203-4DC0-8AD2-381FEAA6BF08}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
