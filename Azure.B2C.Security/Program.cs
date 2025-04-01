@@ -1,16 +1,18 @@
-using Azure.B2C.Security;
+using Azure.B2C.Security.Controllers;
+using Azure.B2C.Security.Utils;
 
 var badDomains = File.ReadLines("bad-domains.txt").ToHashSet();
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Logging.ClearProviders().AddConsole();
 
+builder.Logging.ClearProviders().AddConsole();
 builder.Services.AddKeyedSingleton("BadDomains", badDomains);
 builder.Services.AddTransient<ILogger>(p =>
 {
     var loggerFactory = p.GetRequiredService<ILoggerFactory>();
     return loggerFactory.CreateLogger("Azure.B2C.Security");
 });
+builder.Services.AddTransient<DynamicGraphClientFactory>();
 
 // Disable the "Server" Header on HTTP responses
 builder.WebHost.ConfigureKestrel(options =>
@@ -44,7 +46,6 @@ app.Use(async (context, next) =>
 });
 
 app.MapGet("/", () => "Hello World!");
-
-app.MapSignUp();
+app.MapPost("/signup/b2c-api-connector", SignUp.OnPost);
 
 app.Run();
