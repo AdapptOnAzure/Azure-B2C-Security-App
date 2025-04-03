@@ -72,6 +72,7 @@ public static class SignUp
         if (used > limit)
         {
             // TODO: issue an alert to the admin
+            logger.LogWarning("B2C object count limit exceeded: {Used}/{Limit}", used, limit);
             return TypedResults.Ok(
                 new
                 {
