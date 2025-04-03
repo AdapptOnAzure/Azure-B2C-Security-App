@@ -1,12 +1,10 @@
 using Azure.B2C.Security.Controllers;
 using Azure.B2C.Security.Utils;
 
-var badDomains = File.ReadLines("bad-domains.txt").ToHashSet();
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders().AddConsole();
-builder.Services.AddKeyedSingleton("BadDomains", badDomains);
+builder.Services.AddKeyedSingleton("BadDomains", File.ReadLines("bad-domains.txt").ToHashSet());
 builder.Services.AddTransient<ILogger>(p =>
 {
     var loggerFactory = p.GetRequiredService<ILoggerFactory>();

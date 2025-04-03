@@ -67,7 +67,7 @@ public static class SignUp
             .GetProperty("directorySizeQuota")
             .GetProperty("used")
             .GetInt32();
-        int limit = config.GetValue("QuotaLimit", 50000);
+        int limit = config.GetValue("QUOTA_LIMIT", 50000);
 
         if (used > limit)
         {
