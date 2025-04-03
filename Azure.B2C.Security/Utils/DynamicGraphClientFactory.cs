@@ -7,8 +7,9 @@ public class DynamicGraphClientFactory(IConfiguration config)
 {
     public HttpClient Create(string tenantId)
     {
-        string clientId = config[$"GraphAPI:{tenantId}:ClientId"]!;
-        string clientSecret = config[$"GraphAPI:{tenantId}:ClientSecret"]!;
+        string id = tenantId.Replace('-', '_');
+        string clientId = config[$"GRAPHAPI_{id}_CLIENTID"]!;
+        string clientSecret = config[$"GRAPHAPI_{id}_CLIENTSECRET"]!;
 
         var creds = new ClientSecretCredential(tenantId, clientId, clientSecret, new ClientSecretCredentialOptions()
         {
