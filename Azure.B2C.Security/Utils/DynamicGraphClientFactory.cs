@@ -5,9 +5,11 @@ namespace Azure.B2C.Security.Utils;
 
 public class DynamicGraphClientFactory(IConfiguration config)
 {
-    public HttpClient Create(string tenantId)
+    public HttpClient Create(string id)
     {
-        string id = tenantId.Replace('-', '_');
+        id = id.Replace('-', '_');
+
+        string tenantId = config[$"GRAPHAPI_{id}_TENANTID"]!;
         string clientId = config[$"GRAPHAPI_{id}_CLIENTID"]!;
         string clientSecret = config[$"GRAPHAPI_{id}_CLIENTSECRET"]!;
 

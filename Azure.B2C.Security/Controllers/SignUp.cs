@@ -57,7 +57,7 @@ public static class SignUp
 
         #region B2C object count checks
 
-        HttpClient graphClient = graphClientFactory.Create("537dd295-0f5e-421f-ada5-bfe91002f489");
+        HttpClient graphClient = graphClientFactory.Create(data.RootElement.GetProperty("client_id").GetString()!);
         var response = await graphClient.GetFromJsonAsync<JsonDocument>(
             new Uri("organization?$select=directorySizeQuota", UriKind.Relative)
         );
