@@ -1,4 +1,4 @@
-namespace Azure.B2C.Security.Utils;
+namespace Adappt.Azure.B2C.Security.Utils;
 
 public static class B2CConnector
 {

@@ -1,5 +1,5 @@
-using Azure.B2C.Security.Controllers;
-using Azure.B2C.Security.Utils;
+using Adappt.Azure.B2C.Security.Controllers;
+using Adappt.Azure.B2C.Security.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 

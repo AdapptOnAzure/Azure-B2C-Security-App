@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Azure.B2C.Security.Utils;
+using Adappt.Azure.B2C.Security.Utils;
 
-namespace Azure.B2C.Security.Controllers;
+namespace Adappt.Azure.B2C.Security.Controllers;
 
 public static class SignUp
 {

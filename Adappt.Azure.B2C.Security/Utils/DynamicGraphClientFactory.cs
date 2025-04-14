@@ -1,7 +1,7 @@
 using Azure.Identity;
 using Microsoft.Graph;
 
-namespace Azure.B2C.Security.Utils;
+namespace Adappt.Azure.B2C.Security.Utils;
 
 public class DynamicGraphClientFactory(IConfiguration config)
 {
