@@ -29,4 +29,6 @@ TODO!
 
 # Disclaimer
 
+This application uses works from [StopForumSpam](https://www.stopforumspam.com/downloads).
+
 This repository is not endorsed by my employer, organisation, clients, anyone, anything or any entity in any way, shape or form. This is released on the internet as a convenience only. Usage of this application may induce lucid states where the user gains the ability to implement and plot graph functions which spell out "Microsoft Graph API". No refunds, no "I can't shake my inherent urge to write a paper on making graph functions that spell out 'Microsoft Graph API', please make it stop" support here. 
